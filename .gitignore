@@ -1,0 +1,23 @@
+MAS/
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env / secrets
+.env
+
+# Agent output
+/output
+
+# Editors
+.idea/
+.vscode/
+
+# Working notes
+**/STEPLOG.md
