@@ -14,16 +14,15 @@ class Settings(BaseSettings):
     max_url_content_length: int = 5000
     max_file_content_length: int = 10000
     request_timeout: int = 20
-    # OpenAI SDK defaults to 600s with no override — a stalled call would
-    # look identical to a hang. Fail fast instead.
     llm_timeout: int = 60
     output_dir: str = "output"
     max_iterations: int = 25
+    wrap_up_at: int = 6
 
     model_config = {"env_file": ".env"}
 
-    @property
-    def recursion_limit(self) -> int:
-        """LangGraph counts graph steps, not tool-calling rounds: each round
-        costs an agent step plus a tools step, plus one final agent step."""
-        return 2 * self.max_iterations + 1
+
+# The one shared instance. Everything imports this rather than constructing
+# its own, so a missing key fails here — in the module named config — and
+# not with a confusing traceback pointing at tools or prompts.
+settings = Settings()

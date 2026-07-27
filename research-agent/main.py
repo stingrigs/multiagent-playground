@@ -2,61 +2,48 @@
 #  🔰 [RESEARCH AGENT] Entry point
 # ====================================
 
-from langgraph.errors import GraphRecursionError
+from agent import Agent
 
-from agent import agent
-from config import Settings
-
-settings = Settings()
-
-THREAD_ID = "session"
 TRACE_PREVIEW = 120
 
 
-def preview(text: str, limit: int = TRACE_PREVIEW) -> str:
-    """Shorten a value for the terminal trace. Display only — the report
-    itself is written by write_report, untouched."""
-    flat = " ".join(str(text).split())
-    return flat if len(flat) <= limit else f"{flat[:limit]}…"
+def preview(value) -> str:
+    """Shorten a value for the terminal trace. Display only — what gets
+    written to a report is untouched."""
+    flat = " ".join(str(value).split())
+    return flat if len(flat) <= TRACE_PREVIEW else f"{flat[:TRACE_PREVIEW]}…"
 
 
-def run_turn(user_input: str) -> None:
-    config = {
-        "configurable": {"thread_id": THREAD_ID},
-        "recursion_limit": settings.recursion_limit,
-    }
-    answered = False
-
-    print("🤔 thinking...")
-    try:
-        for chunk in agent.stream({"messages": [("user", user_input)]}, config=config):
-            for node, payload in chunk.items():
-                for msg in payload.get("messages", []):
-                    if node == "model":
-                        for call in msg.tool_calls or []:
-                            print(f"  🔧 {call['name']}({preview(call['args'])})")
-                        if msg.content:
-                            answered = True
-                            print(f"\n🤖 {msg.content}")
-                    elif node == "tools":
-                        print(f"     ↳ {preview(msg.content)}")
-                if node == "tools":
-                    # The next step is another model call — a long pause here
-                    # is normal (reasoning over a big context), not a hang.
-                    print("🤔 thinking...")
-    except GraphRecursionError:
-        # The limit can trip on the same step that produced the answer, so
-        # only report a failure when nothing was actually said.
-        if not answered:
-            print(
-                f"\n⚠️  Stopped after {settings.max_iterations} steps without an"
-                " answer. Try narrowing the question."
-            )
+def render(event: str, payload) -> None:
+    if event == "thinking":
+        print("🤔 thinking...")
+    elif event == "thought":
+        text = str(payload).removeprefix("Thought:").strip()
+        print(f"💭 Thought: {text}")
+    elif event == "tool_call":
+        name, args = payload
+        print(f"🔧 Tool call: {name}({preview(args)})")
+    elif event == "tool_result":
+        _, result = payload
+        print(f"📎 Result: {preview(result)}")
+    elif event == "wrap_up":
+        print(f"⏳ {payload} rounds left — wrapping up.")
+    elif event == "answer":
+        print(f"\n🤖 {payload}")
+    elif event == "limit_reached":
+        # An answer usually still follows: the loop makes one final call
+        # with tools disabled after emitting this.
+        print(
+            f"\n⚠️  Hit the {payload}-round limit — concluding from what was gathered."
+        )
 
 
 def main() -> None:
     print("Research Agent (type 'exit' to quit)")
     print("-" * 40)
+
+    # One Agent for the whole session — its messages list is the memory.
+    agent = Agent()
 
     while True:
         try:
@@ -73,8 +60,14 @@ def main() -> None:
             break
 
         try:
-            run_turn(user_input)
-        except Exception as e:
+            for event, payload in agent.run(user_input):
+                render(event, payload)
+        except KeyboardInterrupt:
+            # Abandon this turn, not the whole session.
+            agent.abort_incomplete_calls()
+            print("\n⚠️  Interrupted. Ask something else, or 'exit' to quit.")
+        except Exception as e:  # noqa: BLE001 - one bad turn must not end the session
+            agent.abort_incomplete_calls(reason=f"Aborted: {type(e).__name__}: {e}")
             print(f"\n⚠️  {type(e).__name__}: {e}")
 
 

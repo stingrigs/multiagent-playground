@@ -20,4 +20,4 @@ venv/
 .vscode/
 
 # Working notes
-**/STEPLOG.md
+steplogs/
