@@ -15,6 +15,7 @@ settings = Settings()
 llm = ChatOpenAI(
     model=settings.model_name,
     api_key=settings.api_key,
+    timeout=settings.llm_timeout,
 )
 
 tools = [web_search, read_url, write_report, list_files, read_file]

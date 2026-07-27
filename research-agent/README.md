@@ -111,6 +111,7 @@ committed.
 | `max_url_content_length` | `5000` | Characters per `read_url` chunk |
 | `max_file_content_length` | `10000` | Characters per `read_file` chunk |
 | `request_timeout` | `20` | Page download timeout, seconds |
+| `llm_timeout` | `60` | LLM call timeout, seconds (SDK default is 600 — fail fast instead) |
 | `max_iterations` | `25` | Tool-calling rounds before the run is cut off |
 | `output_dir` | `output` | Where reports are written |
 

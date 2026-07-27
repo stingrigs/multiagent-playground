@@ -27,6 +27,7 @@ def run_turn(user_input: str) -> None:
     }
     answered = False
 
+    print("🤔 thinking...")
     try:
         for chunk in agent.stream({"messages": [("user", user_input)]}, config=config):
             for node, payload in chunk.items():
@@ -39,6 +40,10 @@ def run_turn(user_input: str) -> None:
                             print(f"\n🤖 {msg.content}")
                     elif node == "tools":
                         print(f"     ↳ {preview(msg.content)}")
+                if node == "tools":
+                    # The next step is another model call — a long pause here
+                    # is normal (reasoning over a big context), not a hang.
+                    print("🤔 thinking...")
     except GraphRecursionError:
         # The limit can trip on the same step that produced the answer, so
         # only report a failure when nothing was actually said.

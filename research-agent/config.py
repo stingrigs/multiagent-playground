@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     max_url_content_length: int = 5000
     max_file_content_length: int = 10000
     request_timeout: int = 20
+    # OpenAI SDK defaults to 600s with no override — a stalled call would
+    # look identical to a hang. Fail fast instead.
+    llm_timeout: int = 60
     output_dir: str = "output"
     max_iterations: int = 25
 
