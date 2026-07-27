@@ -1,5 +1,8 @@
 langchain>=1.2.0
+langchain-openai>=1.4.0
 ddgs>=7.0
 trafilatura>=2.0.0
+lxml_html_clean>=0.4.0
 pydantic>=2.12.0
 pydantic-settings>=2.12.0
+ruff>=0.16.0
