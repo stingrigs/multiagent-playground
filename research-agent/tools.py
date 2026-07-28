@@ -133,7 +133,7 @@ def web_search(
     """Tool to search the web for information."""
     try:
         raw_results = DDGS().text(query, max_results=max_results)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - DDGS scrapes; failures vary
         return [{"error": f"Search failed: {e}"}]
 
     try:
@@ -162,7 +162,10 @@ def read_url(
     if downloaded is None:
         return f"Failed to fetch {url}: invalid URL, timeout, or page unavailable."
 
-    text = trafilatura.extract(downloaded, config=trafilatura_config)
+    try:
+        text = trafilatura.extract(downloaded, config=trafilatura_config)
+    except Exception as e:  # noqa: BLE001 - extraction on arbitrary HTML; failures vary
+        return f"Failed to extract text from {url}: {type(e).__name__}: {e}"
     if text is None:
         return f"No readable text extracted from {url}."
 
