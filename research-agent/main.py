@@ -36,8 +36,12 @@ def run_turn(user_input: str) -> None:
                         for call in msg.tool_calls or []:
                             print(f"  🔧 {call['name']}({preview(call['args'])})")
                         if msg.content:
-                            answered = True
                             print(f"\n🤖 {msg.content}")
+                            # Content alongside tool_calls is commentary, not
+                            # a final answer — only count it once the model
+                            # has stopped calling tools.
+                            if not msg.tool_calls:
+                                answered = True
                     elif node == "tools":
                         print(f"     ↳ {preview(msg.content)}")
                 if node == "tools":
@@ -74,7 +78,7 @@ def main() -> None:
 
         try:
             run_turn(user_input)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - one bad turn must not end the session
             print(f"\n⚠️  {type(e).__name__}: {e}")
 
 
