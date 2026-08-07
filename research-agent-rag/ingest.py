@@ -4,6 +4,7 @@
 
 import os
 import pickle
+import re
 from pathlib import Path
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -17,6 +18,15 @@ settings = Settings()
 
 CHUNKS_FILENAME = "chunks.pkl"
 
+_SINGLE_NEWLINE = re.compile(r"(?<!\n)\n(?!\n)")
+_MULTI_SPACE = re.compile(r" {2,}")
+
+
+def _normalize_page_breaks(text: str) -> str:
+    """PyPDFLoader keeps the PDF's visual line wraps as literal \\n — collapse
+    those to spaces so the splitter's sentence boundary can find real ones."""
+    return _MULTI_SPACE.sub(" ", _SINGLE_NEWLINE.sub(" ", text))
+
 
 def load_documents(data_dir: Path) -> list:
     """One Document per PDF page; skips unreadable files instead of aborting the batch."""
@@ -27,6 +37,9 @@ def load_documents(data_dir: Path) -> list:
         except Exception as e:  # noqa: BLE001 - PDF parsing failures vary
             print(f"  ⚠️  Skipping {path.name}: {type(e).__name__}: {e}")
             continue
+
+        for p in pages:
+            p.page_content = _normalize_page_breaks(p.page_content)
 
         # scanned/image-only PDFs load with empty pages and vanish silently otherwise
         chars = sum(len(p.page_content) for p in pages)
@@ -55,6 +68,8 @@ def ingest() -> None:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
+        separators=["\n\n", ". ", " ", ""],
+        keep_separator="end",  # default (True) puts the separator on the *next* chunk
     )
     chunks = splitter.split_documents(documents)
     print(f"  {len(chunks)} chunks created")
