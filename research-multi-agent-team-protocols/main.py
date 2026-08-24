@@ -180,7 +180,7 @@ def review_actions(interrupt_) -> list[dict]:
         print(f"{'=' * 60}")
         print(f"  Tool: {action.get('name')}")
         print(f"  File: {args.get('filename')}")
-        print(f"  Preview: {preview(args.get('content', ''), limit=600)}")
+        print(f"\n{args.get('content', '')}\n")
 
         while True:
             try:

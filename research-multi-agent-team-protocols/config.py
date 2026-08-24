@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     llm_timeout: int = 60  # SDK default is 600s — fail fast instead of hanging
     output_dir: str = "output"
     max_iterations: int = 25
-    max_revision_rounds: int = 2
+    max_revision_rounds: int = 1  # was 2 — 3x pipeline cost per round for little gain
 
     # Protocol endpoints
     host: str = "127.0.0.1"

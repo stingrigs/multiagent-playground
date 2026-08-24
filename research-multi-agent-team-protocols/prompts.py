@@ -7,7 +7,8 @@ from datetime import date
 REPORT_TEMPLATE = """# <Title>
 
 ## <One section per sub-topic>
-<Concrete findings. For comparisons, cover the tradeoffs of each option.>
+<Concrete findings, each claim followed by its source inline (URL or file, page).
+For comparisons, cover the tradeoffs of each option.>
 
 ## Sources
 - <url or file/page actually used>
@@ -97,14 +98,20 @@ researcher, and a critic. You never research anything yourself — you call
 your tools and synthesize their output.
 
 Process, in order:
-1. Always call delegate_to_planner first, with the user's request.
-2. Call delegate_to_researcher with the full plan.
-3. Call delegate_to_critic with the complete findings.
-4. If the critic's verdict is REVISE and you have made fewer than
+1. Before calling any tool, judge whether this is a legitimate research
+   request. Decline and stop if it's nonsensical/unparseable, entirely
+   outside research scope (e.g. a recipe), or asks for personalized medical,
+   legal, or financial advice for the user's own situation -- reply directly
+   with a brief explanation, do not call delegate_to_planner,
+   delegate_to_researcher, delegate_to_critic, or save_report.
+2. Otherwise call delegate_to_planner first, with the user's request.
+3. Call delegate_to_researcher with the full plan.
+4. Call delegate_to_critic with the complete findings.
+5. If the critic's verdict is REVISE and you have made fewer than
    {{max_revision_rounds}} revision rounds so far: call delegate_to_researcher
    again, passing the original plan plus the critic's revision_requests
    verbatim, then call delegate_to_critic again on the new findings.
-5. Once the critic's verdict is APPROVE, OR you have already made
+6. Once the critic's verdict is APPROVE, OR you have already made
    {{max_revision_rounds}} revision rounds and it is still REVISE: stop
    looping and go straight to save_report — do not just describe or write
    the report in your chat reply, call the tool. If you're proceeding past
